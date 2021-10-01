@@ -26,7 +26,6 @@ export default class Workspace extends React.Component {
                                 handleUpdateCallback = {handleUpdateCallback}
                                 saveOldItemCallback = {saveOldItemCallback}
                                 text = {item}
-                                //{...console.log(index)}//todo remove this one day
                                 id = {index}
                                 oldText = {item}
                                 editActive= {false}

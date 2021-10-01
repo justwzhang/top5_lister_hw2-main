@@ -29,6 +29,7 @@ class App extends React.Component {
         // SETUP THE INITIAL STATE
         this.state = {
             currentList : null,
+            deleteKeyPair: { "key": null, "name": null },
             oldText: "",
             oldIndex: 0,
             sessionData : loadedSessionData,
@@ -69,6 +70,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: newList,
             oldText: prevState.oldText,
+            deleteKeyPair: prevState.deleteKeyPair,
             oldIndex: prevState.oldIndex,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey + 1,
@@ -104,6 +106,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: prevState.currentList,
             oldText: prevState.oldText,
+            deleteKeyPair: prevState.deleteKeyPair,
             oldIndex: prevState.oldIndex,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey,
@@ -127,6 +130,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: newCurrentList,
             oldText: prevState.oldText,
+            deleteKeyPair: prevState.deleteKeyPair,
             oldIndex: prevState.oldIndex,
             sessionData: prevState.sessionData,
             tps: prevState.tps
@@ -143,7 +147,7 @@ class App extends React.Component {
             currentList: null,
             oldText: prevState.oldText,
             oldIndex: prevState.oldIndex,
-            //listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
+            deleteKeyPair: prevState.deleteKeyPair,
             sessionData: prevState.sessionData,
             tps:prevState.tps
         }), () => {
@@ -152,6 +156,16 @@ class App extends React.Component {
         });
     }
     deleteList = (key) => {
+        this.setState(prevState =>({
+            currentList: prevState.currentList,
+            oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
+            deleteKeyPair: key,
+            sessionData: prevState.sessionData,
+            tps:prevState.tps
+        }), ()=>{
+
+        });
         // SOMEHOW YOU ARE GOING TO HAVE TO FIGURE OUT
         // WHICH LIST IT IS THAT THE USER WANTS TO
         // DELETE AND MAKE THAT CONNECTION SO THAT THE
@@ -206,6 +220,7 @@ class App extends React.Component {
             currentList: prevState.currentList,
             oldText: newOldText,
             oldIndex: prevState.oldIndex,
+            deleteKeyPair: prevState.deleteKeyPair,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }))
@@ -219,19 +234,21 @@ class App extends React.Component {
             currentList: newCurrentList,
             oldText: prevState.oldText,
             oldIndex: prevState.oldIndex,
+            deleteKeyPair: prevState.deleteKeyPair,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }))
     }
 
     renameItem = (index, newText) => {
-        let tempCurrentLsit = this.state.currentList; 
-        let newTransaction = new ChangeItem_Transaction(tempCurrentLsit, index, this.state.oldText, newText);
+        let tempCurrentList = this.state.currentList; 
+        let newTransaction = new ChangeItem_Transaction(tempCurrentList, index, this.state.oldText, newText);
         let newCurrentList = this.state.tps.addTransaction(newTransaction);
         this.setState(prevState => ({
             currentList: newCurrentList,
             oldText: newText,
             oldIndex: prevState.oldIndex,
+            deleteKeyPair: prevState.deleteKeyPair,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }), () =>{
@@ -249,6 +266,7 @@ class App extends React.Component {
             currentList: newCurrentList,
             oldText: prevState.oldText,
             oldIndex: prevState.oldIndex,
+            deleteKeyPair: prevState.deleteKeyPair,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }), () =>{
@@ -264,6 +282,7 @@ class App extends React.Component {
             currentList: prevState.currentList,
             oldText: prevState.oldText,
             oldIndex: item,
+            deleteKeyPair: prevState.deleteKeyPair,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }), () =>{
@@ -283,6 +302,8 @@ class App extends React.Component {
             this.setState(prevState =>({
                 currentList: newCurrentList,
                 oldText: prevState.oldText,
+                oldIndex: prevState.oldIndex,
+                deleteKeyPair: prevState.deleteKeyPair,
                 sessionData: prevState.sessionData,
                 tps:prevState.tps
             }), ()=>{
@@ -302,12 +323,49 @@ class App extends React.Component {
             this.setState(prevState =>({
                 currentList: newCurrentList,
                 oldText: prevState.oldText,
+                oldIndex: prevState.oldIndex,
+                deleteKeyPair: prevState.deleteKeyPair,
                 sessionData: prevState.sessionData,
                 tps:prevState.tps
             }), ()=>{
                 this.db.mutationUpdateList(this.state.currentList);
             });
         }
+    }
+    confirmedDeleteList = (id) =>{
+        let tempCurrentList = this.state.currentList;
+        let newKeyNamePairs = [];
+        this.state.sessionData.keyNamePairs.map((pair) =>{
+            if(pair.key !==id){
+                newKeyNamePairs = [...newKeyNamePairs, pair];
+            }
+            if(pair.key === id && pair.name === this.state.currentList.name)
+                tempCurrentList = null;
+        });
+        // for(let i=0; i< this.state.sessionData.keyNamePairs.length; i++){
+        //     let pair = this.state.sessionData.keyNamePairs[i];
+        //     if(pair.id !==id){
+        //         newKeyNamePairs = [...newKeyNamePairs, pair];
+        //     }
+        //     if(pair.id === id && pair.name === this.state.currentList.name){
+        //         tempCurrentList = null;
+        //     }
+        // }
+        this.sortKeyNamePairsByName(newKeyNamePairs);
+        this.setState(prevState =>({
+            currentList: tempCurrentList,
+            oldText:prevState.oldText,
+            oldIndex:prevState.oldIndex,
+            deleteKeyPair: prevState.deleteKeyPair,
+            sessionData: {
+                nextKey: prevState.sessionData.nextKey + 1,
+                counter: prevState.sessionData.counter + 1,
+                keyNamePairs: newKeyNamePairs
+            },
+            tps:prevState.tps
+        }), ()=>{
+            this.db.mutationUpdateSessionData(this.state.sessionData);
+        });
     }
 
     render() {
@@ -339,6 +397,8 @@ class App extends React.Component {
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteModal
+                    listKeyPair = {this.state.deleteKeyPair}
+                    deleteListCallback = {this.confirmedDeleteList}
                     hideDeleteListModalCallback={this.hideDeleteListModal}
                 />
             </div>
