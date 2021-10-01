@@ -19,6 +19,6 @@ export default class MoveItem_Transaction extends jsTPS_Transaction{
     }
 
     moveItem(index1, index2){
-
+        this.currentList.items.splice(index2, 0, this.items.splice(index1, 1)[0]);
     }
 }
