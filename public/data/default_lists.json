@@ -1,7 +1,7 @@
 {
     "top5Lists": [
         {
-            "key": 0,
+            "key": "0",
             "name": "Games",
             "likes": 2150,
             "dislikes": 114,
@@ -17,7 +17,7 @@
             ]
         },
         {
-            "key": 1,
+            "key": "1",
             "name": "Movies",
             "likes": 50,
             "dislikes": 4,
@@ -33,7 +33,7 @@
             ]
         },
         {
-            "key": 2,
+            "key": "2",
             "name": "Pink Floyd Songs",
             "likes": 520,
             "dislikes": 14,

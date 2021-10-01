@@ -216,6 +216,7 @@ input {
 .top5-item, .top5-item-dragged-to {
   text-align: left;
   width:95%;
+  height: 20%;
   padding-left:5%;
 }
 .top5-item {
