@@ -30,6 +30,7 @@ class App extends React.Component {
         this.state = {
             currentList : null,
             oldText: "",
+            oldIndex: 0,
             sessionData : loadedSessionData,
             tps: new jsTPS(),
         }
@@ -68,6 +69,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: newList,
             oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey + 1,
                 counter: prevState.sessionData.counter + 1,
@@ -102,6 +104,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: prevState.currentList,
             oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey,
                 counter: prevState.sessionData.counter,
@@ -124,6 +127,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: newCurrentList,
             oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }), () => {
@@ -138,6 +142,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: null,
             oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
             //listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
             sessionData: prevState.sessionData,
             tps:prevState.tps
@@ -200,6 +205,7 @@ class App extends React.Component {
         this.setState(prevState =>({
             currentList: prevState.currentList,
             oldText: newOldText,
+            oldIndex: prevState.oldIndex,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }))
@@ -212,6 +218,7 @@ class App extends React.Component {
         this.setState(prevState =>({
             currentList: newCurrentList,
             oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }))
@@ -224,6 +231,7 @@ class App extends React.Component {
         this.setState(prevState => ({
             currentList: newCurrentList,
             oldText: newText,
+            oldIndex: prevState.oldIndex,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }), () =>{
@@ -234,6 +242,35 @@ class App extends React.Component {
             }
         });
     }
+    moveItem = (newIndex) =>{
+        let newTransaction = new MoveItem_Transaction(this.state.currentList, this.state.oldIndex, newIndex);
+        let newCurrentList = this.state.tps.addTransaction(newTransaction);
+        this.setState(prevState => ({
+            currentList: newCurrentList,
+            oldText: prevState.oldText,
+            oldIndex: prevState.oldIndex,
+            sessionData: prevState.sessionData,
+            tps: prevState.tps
+        }), () =>{
+            this.db.mutationUpdateList(this.state.currentList);
+            this.enableUndo();
+            if(!this.state.tps.hasTransactionToRedo()){
+                this.disableRedo();
+            }
+        });
+    }
+    saveOldItemIndex = (item) =>{
+        this.setState(prevState => ({
+            currentList: prevState.currentList,
+            oldText: prevState.oldText,
+            oldIndex: item,
+            sessionData: prevState.sessionData,
+            tps: prevState.tps
+        }), () =>{
+            
+        });
+    }
+
     undo = () =>{
         if(this.state.tps.hasTransactionToUndo()){
             let newCurrentList = this.state.tps.undoTransaction(this.state.currentList);
@@ -295,7 +332,10 @@ class App extends React.Component {
                     currentList={this.state.currentList} 
                     renameItemCallback={this.renameItem}
                     handleUpdateCallback = {this.itemHandleUpdate}
-                    saveOldItemCallback={this.itemSaveOldText}/>
+                    saveOldItemCallback={this.itemSaveOldText}
+                    moveItemCallback = {this.moveItem}
+                    saveOldItemIndexCallback = {this.saveOldItemIndex}
+                    oldIndex = {this.state.oldIndex}/>
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteModal

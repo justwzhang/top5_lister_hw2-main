@@ -3,7 +3,7 @@ import ItemCard from "./ItemCard"
 
 export default class Workspace extends React.Component {
     render() {
-        const {currentList,handleUpdateCallback,renameItemCallback, saveOldItemCallback} = this.props
+        const {currentList,handleUpdateCallback,renameItemCallback, saveOldItemCallback, moveItemCallback, saveOldItemIndexCallback, oldIndex} = this.props
         if(currentList !== null){
             return (
                 <div id="top5-workspace">
@@ -19,6 +19,9 @@ export default class Workspace extends React.Component {
                         {
                             currentList.items.map((item, index) => (
                                 <ItemCard
+                                moveItemCallback = {moveItemCallback}
+                                saveOldItemIndex = {saveOldItemIndexCallback}
+                                oldIndex = {oldIndex}
                                 renameItemCallback = {renameItemCallback}
                                 handleUpdateCallback = {handleUpdateCallback}
                                 saveOldItemCallback = {saveOldItemCallback}
