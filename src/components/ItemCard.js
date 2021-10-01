@@ -1,10 +1,16 @@
 import React from "react"
 
 export default class ItemCard extends React.Component{
+    constructor(props){
+        super(props)
+        this.state = {
+            editActive: this.props.ed
+        }
+    }
 
     handleClick = (event) => {
         if (event.detail === 1) {
-            //this will save something somewhere for the drag function
+            //this will save something somewhere for the drag function maybe a callback function
         }
         else if (event.detail === 2) {
             this.handleToggleEdit(event);
@@ -12,7 +18,9 @@ export default class ItemCard extends React.Component{
     }
 
     handleToggleEdit = (event) => {
-        this.props.editActive = !this.props.editActive;
+        this.setState({
+            editActive: !this.state.editActive
+        });
     }
 
     handleKeyPress = (event) => {
@@ -22,23 +30,24 @@ export default class ItemCard extends React.Component{
     }
 
     handleBlur = () => {
-        let textValue = this.props.text;
-        console.log("ListCard handleBlur: " + textValue);
-        this.props.renameItemCallback(this.props.id, textValue);
+        //let textValue = ;
+        console.log("ListCard handleBlur: " + this.props.text);
+        this.props.renameItemCallback(this.props.id, this.props.oldText, this.props.text);
         this.handleToggleEdit();
+        // this.props.oldText = this.props.text;
     }
     handleUpdate = (event) => {
-        this.props.text = event.target.value;
+        this.props.handleUpdateCallback(this.props.id, event.target.value);
     }
     render(){
-        if(this.props.editActive){
+        if(this.state.editActive){
             return (
                 <input
                     id={this.props.id}
                     className='top5-item'
                     type='text'
                     onKeyPress={this.handleKeyPress}
-                    //onBlur={this.handleBlur}
+                    onBlur={this.handleBlur}
                     onChange={this.handleUpdate}
                     defaultValue={this.props.text}
                 />

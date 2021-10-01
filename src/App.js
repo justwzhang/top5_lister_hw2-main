@@ -11,6 +11,11 @@ import Sidebar from './components/Sidebar.js'
 import Workspace from './components/Workspace.js';
 import Statusbar from './components/Statusbar.js'
 
+// These are the data structures that will handle the transactions for redo and undo
+import jsTPS from './transactions/jsTPS';
+import ChangeItem_Transaction from './transactions/ChangeItem_Transaction';
+import MoveItem_Transaction from './transactions/MoveItem_Transaction';
+
 class App extends React.Component {
     constructor(props) {
         super(props);
@@ -24,7 +29,9 @@ class App extends React.Component {
         // SETUP THE INITIAL STATE
         this.state = {
             currentList : null,
-            sessionData : loadedSessionData
+            oldText: "",
+            sessionData : loadedSessionData,
+            tps: new jsTPS(),
         }
     }
     sortKeyNamePairsByName = (keyNamePairs) => {
@@ -60,11 +67,13 @@ class App extends React.Component {
         // SHOULD BE DONE VIA ITS CALLBACK
         this.setState(prevState => ({
             currentList: newList,
+            oldText: prevState.oldText,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey + 1,
                 counter: prevState.sessionData.counter + 1,
                 keyNamePairs: updatedPairs
-            }
+            },
+            tps: prevState.tps
         }), () => {
             // PUTTING THIS NEW LIST IN PERMANENT STORAGE
             // IS AN AFTER EFFECT
@@ -91,14 +100,17 @@ class App extends React.Component {
 
         this.setState(prevState => ({
             currentList: prevState.currentList,
+            oldText: prevState.oldText,
             sessionData: {
                 nextKey: prevState.sessionData.nextKey,
                 counter: prevState.sessionData.counter,
                 keyNamePairs: newKeyNamePairs
-            }
+            },
+            tps: prevState.tps
         }), () => {
             // AN AFTER EFFECT IS THAT WE NEED TO MAKE SURE
             // THE TRANSACTION STACK IS CLEARED
+            this.state.tps.clearAllTransactions();
             let list = this.db.queryGetList(key);
             list.name = newName;
             this.db.mutationUpdateList(list);
@@ -110,20 +122,23 @@ class App extends React.Component {
         let newCurrentList = this.db.queryGetList(key);
         this.setState(prevState => ({
             currentList: newCurrentList,
-            sessionData: prevState.sessionData
+            oldText: prevState.oldText,
+            sessionData: prevState.sessionData,
+            tps: prevState.tps
         }), () => {
-
-            // ANY AFTER EFFECTS?
+            this.state.tps.clearAllTransactions();
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
     closeCurrentList = () => {
         this.setState(prevState => ({
             currentList: null,
-            listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
-            sessionData: this.state.sessionData
+            oldText: prevState.oldText,
+            //listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
+            sessionData: this.state.sessionData,
+            tps:prevState.tps
         }), () => {
-            // ANY AFTER EFFECTS?
+            this.state.tps.clearAllTransactions();
         });
     }
     deleteList = (key) => {
@@ -144,8 +159,30 @@ class App extends React.Component {
         let modal = document.getElementById("delete-modal");
         modal.classList.remove("is-visible");
     }
-    renameItem(index, newText){
+    itemHandleUpdate = (index, newText) => {
+        let newOldText = this.state.currentList.items[index];
+        let newCurrentList = this.state.currentList;
+        newCurrentList.items[index] = newText;
+        this.setState(prevState =>({
+            currentList: newCurrentList,
+            oldText: newOldText,
+            sessionData: prevState.sessionData,
+            tps: prevState.tps
+        }))
+    }
 
+    renameItem = (index, oldText, newText) => {
+        let tempCurrentLsit = this.state.currentList; 
+        let newTransaction = new ChangeItem_Transaction(tempCurrentLsit, index, oldText, newText);
+        let newCurrentList = this.state.tps.addTransaction(newTransaction);
+        this.setState(prevState => ({
+            currentList: newCurrentList,
+            oldText: newText,
+            sessionData: prevState.sessionData,
+            tps: prevState.tps
+        }), () =>{
+            this.db.mutationUpdateList(this.state.currentList);
+        });
     }
     render() {
         return (
@@ -164,7 +201,8 @@ class App extends React.Component {
                 />
                 <Workspace
                     currentList={this.state.currentList} 
-                    renameItemCallback={this.renameItem}/>
+                    renameItemCallback={this.renameItem}
+                    handleUpdateCallback = {this.itemHandleUpdate}/>
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteModal
