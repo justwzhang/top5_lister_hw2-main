@@ -79,6 +79,7 @@ class App extends React.Component {
             // IS AN AFTER EFFECT
             this.db.mutationCreateList(newList);
             this.db.mutationUpdateSessionData(this.state.sessionData)
+            this.enableClose();
         });
     }
     renameList = (key, newName) => {
@@ -127,6 +128,9 @@ class App extends React.Component {
             tps: prevState.tps
         }), () => {
             this.state.tps.clearAllTransactions();
+            this.enableClose();
+            this.disableRedo();
+            this.disableUndo();
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF CLOSING THE CURRENT LIST
@@ -135,10 +139,11 @@ class App extends React.Component {
             currentList: null,
             oldText: prevState.oldText,
             //listKeyPairMarkedForDeletion : prevState.listKeyPairMarkedForDeletion,
-            sessionData: this.state.sessionData,
+            sessionData: prevState.sessionData,
             tps:prevState.tps
         }), () => {
             this.state.tps.clearAllTransactions();
+            this.disableClose();
         });
     }
     deleteList = (key) => {
@@ -159,21 +164,62 @@ class App extends React.Component {
         let modal = document.getElementById("delete-modal");
         modal.classList.remove("is-visible");
     }
-    itemHandleUpdate = (index, newText) => {
+
+    enableUndo(){
+        let undo = document.getElementById("undo-button");
+        undo.classList.remove("top5-button-disabled");
+        undo.classList.add("top5-button")
+    }
+    disableUndo(){
+        let undo = document.getElementById("undo-button");
+        undo.classList.remove("top5-button")
+        undo.classList.add("top5-button-disabled")
+    }
+    enableRedo(){
+        let redo = document.getElementById("redo-button");
+        redo.classList.remove("top5-button-disabled")
+        redo.classList.add("top5-button")
+    }
+    disableRedo(){
+        let redo = document.getElementById("redo-button");
+        redo.classList.remove("top5-buttond")
+        redo.classList.add("top5-button-disabled")
+    }
+    enableClose(){
+        let close = document.getElementById("close-button");
+        close.classList.remove("top5-button-disabled")
+        close.classList.add("top5-button")
+    }
+    disableClose(){
+        let close = document.getElementById("close-button");
+        close.classList.remove("top5-button")
+        close.classList.add("top5-button-disabled")
+    }
+    itemSaveOldText = (index) => {
         let newOldText = this.state.currentList.items[index];
-        let newCurrentList = this.state.currentList;
-        newCurrentList.items[index] = newText;
         this.setState(prevState =>({
-            currentList: newCurrentList,
+            currentList: prevState.currentList,
             oldText: newOldText,
             sessionData: prevState.sessionData,
             tps: prevState.tps
         }))
     }
 
-    renameItem = (index, oldText, newText) => {
+    itemHandleUpdate = (index, newText) => {
+        let newOldText = this.state.currentList.items[index];
+        let newCurrentList = this.state.currentList;
+        newCurrentList.items[index] = newText;
+        this.setState(prevState =>({
+            currentList: newCurrentList,
+            oldText: prevState.oldText,
+            sessionData: prevState.sessionData,
+            tps: prevState.tps
+        }))
+    }
+
+    renameItem = (index, newText) => {
         let tempCurrentLsit = this.state.currentList; 
-        let newTransaction = new ChangeItem_Transaction(tempCurrentLsit, index, oldText, newText);
+        let newTransaction = new ChangeItem_Transaction(tempCurrentLsit, index, this.state.oldText, newText);
         let newCurrentList = this.state.tps.addTransaction(newTransaction);
         this.setState(prevState => ({
             currentList: newCurrentList,
@@ -182,14 +228,59 @@ class App extends React.Component {
             tps: prevState.tps
         }), () =>{
             this.db.mutationUpdateList(this.state.currentList);
+            this.enableUndo();
+            if(!this.state.tps.hasTransactionToRedo()){
+                this.disableRedo();
+            }
         });
     }
+    undo = () =>{
+        if(this.state.tps.hasTransactionToUndo()){
+            let newCurrentList = this.state.tps.undoTransaction(this.state.currentList);
+            if(!this.state.tps.hasTransactionToUndo()){
+                this.disableUndo();
+            }
+            if(this.state.tps.hasTransactionToRedo()){
+                this.enableRedo();
+            }
+            this.setState(prevState =>({
+                currentList: newCurrentList,
+                oldText: prevState.oldText,
+                sessionData: prevState.sessionData,
+                tps:prevState.tps
+            }), ()=>{
+                this.db.mutationUpdateList(this.state.currentList);
+            });
+        }
+    }
+    redo = () =>{
+        if(this.state.tps.hasTransactionToRedo()){
+            let newCurrentList = this.state.tps.doTransaction(this.state.currentList);
+            if(!this.state.tps.hasTransactionToRedo()){
+                this.disableRedo();
+            }
+            if(this.state.tps.hasTransactionToUndo()){
+                this.enableUndo();
+            }
+            this.setState(prevState =>({
+                currentList: newCurrentList,
+                oldText: prevState.oldText,
+                sessionData: prevState.sessionData,
+                tps:prevState.tps
+            }), ()=>{
+                this.db.mutationUpdateList(this.state.currentList);
+            });
+        }
+    }
+
     render() {
         return (
             <div id="app-root">
                 <Banner 
                     title='Top 5 Lister'
-                    closeCallback={this.closeCurrentList} />
+                    closeCallback={this.closeCurrentList} 
+                    undoCallback = {this.undo}
+                    redoCallback = {this.redo}/>
                 <Sidebar
                     heading='Your Lists'
                     currentList={this.state.currentList}
@@ -198,11 +289,13 @@ class App extends React.Component {
                     deleteListCallback={this.deleteList}
                     loadListCallback={this.loadList}
                     renameListCallback={this.renameList}
+                    
                 />
                 <Workspace
                     currentList={this.state.currentList} 
                     renameItemCallback={this.renameItem}
-                    handleUpdateCallback = {this.itemHandleUpdate}/>
+                    handleUpdateCallback = {this.itemHandleUpdate}
+                    saveOldItemCallback={this.itemSaveOldText}/>
                 <Statusbar 
                     currentList={this.state.currentList} />
                 <DeleteModal

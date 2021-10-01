@@ -3,7 +3,7 @@ import ItemCard from "./ItemCard"
 
 export default class Workspace extends React.Component {
     render() {
-        const {currentList,handleUpdateCallback,renameItemCallback} = this.props
+        const {currentList,handleUpdateCallback,renameItemCallback, saveOldItemCallback} = this.props
         if(currentList !== null){
             return (
                 <div id="top5-workspace">
@@ -21,6 +21,7 @@ export default class Workspace extends React.Component {
                                 <ItemCard
                                 renameItemCallback = {renameItemCallback}
                                 handleUpdateCallback = {handleUpdateCallback}
+                                saveOldItemCallback = {saveOldItemCallback}
                                 text = {item}
                                 //{...console.log(index)}//todo remove this one day
                                 id = {index}

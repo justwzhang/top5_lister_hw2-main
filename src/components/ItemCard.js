@@ -13,6 +13,7 @@ export default class ItemCard extends React.Component{
             //this will save something somewhere for the drag function maybe a callback function
         }
         else if (event.detail === 2) {
+            this.props.saveOldItemCallback(this.props.id);
             this.handleToggleEdit(event);
         }
     }
@@ -32,7 +33,7 @@ export default class ItemCard extends React.Component{
     handleBlur = () => {
         //let textValue = ;
         console.log("ListCard handleBlur: " + this.props.text);
-        this.props.renameItemCallback(this.props.id, this.props.oldText, this.props.text);
+        this.props.renameItemCallback(this.props.id,  this.props.text);
         this.handleToggleEdit();
         // this.props.oldText = this.props.text;
     }
