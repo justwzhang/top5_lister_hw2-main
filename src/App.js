@@ -83,6 +83,9 @@ class App extends React.Component {
             // IS AN AFTER EFFECT
             this.db.mutationCreateList(newList);
             this.db.mutationUpdateSessionData(this.state.sessionData)
+            this.state.tps.clearAllTransactions();
+            this.disableUndo();
+            this.disableRedo();
             this.enableClose();
         });
     }
@@ -153,8 +156,11 @@ class App extends React.Component {
         }), () => {
             this.state.tps.clearAllTransactions();
             this.disableClose();
+            this.disableUndo();
+            this.disableRedo();
         });
     }
+    //only sets the name and reveals the modal does NOT delete the list
     deleteList = (key) => {
         this.setState(prevState =>({
             currentList: prevState.currentList,
@@ -166,10 +172,6 @@ class App extends React.Component {
         }), ()=>{
 
         });
-        // SOMEHOW YOU ARE GOING TO HAVE TO FIGURE OUT
-        // WHICH LIST IT IS THAT THE USER WANTS TO
-        // DELETE AND MAKE THAT CONNECTION SO THAT THE
-        // NAME PROPERLY DISPLAYS INSIDE THE MODAL
         this.showDeleteListModal();
     }
     // THIS FUNCTION SHOWS THE MODAL FOR PROMPTING THE USER
@@ -183,7 +185,7 @@ class App extends React.Component {
         let modal = document.getElementById("delete-modal");
         modal.classList.remove("is-visible");
     }
-
+    //the next methods are to disable and enable the 3 buttons 
     enableUndo(){
         let undo = document.getElementById("undo-button");
         undo.classList.remove("top5-button-disabled");
@@ -214,6 +216,7 @@ class App extends React.Component {
         close.classList.remove("top5-button")
         close.classList.add("top5-button-disabled")
     }
+    //saves the old text for use in the tps
     itemSaveOldText = (index) => {
         let newOldText = this.state.currentList.items[index];
         this.setState(prevState =>({
@@ -226,6 +229,7 @@ class App extends React.Component {
         }))
     }
 
+    //updates the list item at the given index
     itemHandleUpdate = (index, newText) => {
         let newOldText = this.state.currentList.items[index];
         let newCurrentList = this.state.currentList;
@@ -240,6 +244,7 @@ class App extends React.Component {
         }))
     }
 
+    //confirms renames the item at the given index and uses a tps for the undo and redo functions
     renameItem = (index, newText) => {
         let tempCurrentList = this.state.currentList; 
         let newTransaction = new ChangeItem_Transaction(tempCurrentList, index, this.state.oldText, newText);
@@ -259,6 +264,7 @@ class App extends React.Component {
             }
         });
     }
+    //handles the moving of items through a tps which will allow for undo and redo
     moveItem = (newIndex) =>{
         let newTransaction = new MoveItem_Transaction(this.state.currentList, this.state.oldIndex, newIndex);
         let newCurrentList = this.state.tps.addTransaction(newTransaction);
@@ -277,6 +283,7 @@ class App extends React.Component {
             }
         });
     }
+    //saves the old index of an item for tps use
     saveOldItemIndex = (item) =>{
         this.setState(prevState => ({
             currentList: prevState.currentList,
@@ -289,7 +296,7 @@ class App extends React.Component {
             
         });
     }
-
+    //undos whatever is at the current location of the tps
     undo = () =>{
         if(this.state.tps.hasTransactionToUndo()){
             let newCurrentList = this.state.tps.undoTransaction(this.state.currentList);
@@ -311,6 +318,7 @@ class App extends React.Component {
             });
         }
     }
+    //redos whatever is at the current location of the tps
     redo = () =>{
         if(this.state.tps.hasTransactionToRedo()){
             let newCurrentList = this.state.tps.doTransaction(this.state.currentList);
@@ -332,6 +340,7 @@ class App extends React.Component {
             });
         }
     }
+    //actually deleats the list with the given unique id
     confirmedDeleteList = (id) =>{
         let tempCurrentList = this.state.currentList;
         let newKeyNamePairs = [];
@@ -342,15 +351,6 @@ class App extends React.Component {
             if(pair.key === id && pair.name === this.state.currentList.name)
                 tempCurrentList = null;
         });
-        // for(let i=0; i< this.state.sessionData.keyNamePairs.length; i++){
-        //     let pair = this.state.sessionData.keyNamePairs[i];
-        //     if(pair.id !==id){
-        //         newKeyNamePairs = [...newKeyNamePairs, pair];
-        //     }
-        //     if(pair.id === id && pair.name === this.state.currentList.name){
-        //         tempCurrentList = null;
-        //     }
-        // }
         this.sortKeyNamePairsByName(newKeyNamePairs);
         this.setState(prevState =>({
             currentList: tempCurrentList,
@@ -367,7 +367,7 @@ class App extends React.Component {
             this.db.mutationUpdateSessionData(this.state.sessionData);
         });
     }
-
+    
     render() {
         return (
             <div id="app-root">

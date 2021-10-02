@@ -34,7 +34,7 @@ export default class ItemCard extends React.Component{
     }
     handleClick = (event) => {
         if (event.detail === 1) {
-            //this will save something somewhere for the drag function maybe a callback function
+            //nothing
         }
         else if (event.detail === 2) {
             this.props.saveOldItemCallback(this.props.id);
