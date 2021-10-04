@@ -348,8 +348,9 @@ class App extends React.Component {
             if(pair.key !==id){
                 newKeyNamePairs = [...newKeyNamePairs, pair];
             }
-            if(pair.key === id && pair.name === this.state.currentList.name)
-                tempCurrentList = null;
+            if(this.state.currentList !== null)
+                if(pair.key === id && pair.name === this.state.currentList.name)
+                    tempCurrentList = null;
         });
         this.sortKeyNamePairsByName(newKeyNamePairs);
         this.setState(prevState =>({
