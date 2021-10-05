@@ -1,16 +1,6 @@
 import React from "react";
 
 export default class EditToolbar extends React.Component {
-    constructor(props){
-        super(props);
-        window.addEventListener('keydown', (event)=>{
-            if(event.ctrlKey && event.key === "z"){
-                this.props.undoCallback();
-            }else if(event.ctrlKey && event.key === "y"){
-                this.props.redoCallback();
-            }
-        });
-    }
     close = () =>{
         this.props.closeCallback();
     }

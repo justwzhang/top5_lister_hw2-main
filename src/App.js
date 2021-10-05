@@ -20,6 +20,13 @@ class App extends React.Component {
     constructor(props) {
         super(props);
 
+        window.addEventListener('keydown', (event)=>{
+            if(event.ctrlKey && event.key === "z"){
+                this.undo();
+            }else if(event.ctrlKey && event.key === "y"){
+                this.redo();
+            }
+        });
         // THIS WILL TALK TO LOCAL STORAGE
         this.db = new DBManager();
 
@@ -125,6 +132,8 @@ class App extends React.Component {
             list.name = newName;
             this.db.mutationUpdateList(list);
             this.db.mutationUpdateSessionData(this.state.sessionData);
+            document.getElementById("add-list-button").classList.remove("top5-button-disabled")
+            document.getElementById("add-list-button").classList.add("top5-button");
         });
     }
     // THIS FUNCTION BEGINS THE PROCESS OF LOADING A LIST FOR EDITING
